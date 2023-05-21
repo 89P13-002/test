@@ -1,0 +1,52 @@
+name: Great on issue
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - closed
+
+jobs:
+  great_message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Environment
+        run: echo '${{ toJSON(github.event) }}'
+
+      - name: Set up GitHub repository context
+        uses: actions/github-script@v4
+        with:
+         github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Send message to issue creator
+        uses: actions/github-script@v4
+        with:
+         github-token: ${{ secrets.GITHUB_TOKEN }}
+         script: |
+         const octokit = context.octokit;
+         const owner = context.repo.owner;
+          const repo = context.repo.repo;
+         const issueNumber = context.issue.number;
+         const issue = await octokit.rest.issues.get({
+         owner,
+         repo,
+        issue_number: issueNumber,
+         });
+
+         let message = '';
+
+         // Determine the issue type and set the corresponding message
+         if (issue.data.labels.some(label => label.name === 'bug')) {
+         message = 'Hello, issue creator! This is a bug-related issue.';
+         } else if (issue.data.labels.some(label => label.name === 'enhancement')) {
+         message = 'Hello, issue creator! This is an enhancement-related issue.';
+         } else {
+         message = 'Hello, issue creator! This is a general issue.';
+         }
+
+         await octokit.rest.issues.createComment({
+         owner,
+         repo,
+         issue_number:issue_Number,
+          body:message,
+         });
